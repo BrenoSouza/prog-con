@@ -11,16 +11,27 @@ func main() {
 	// for {
 	// fmt.Println("funciona")
 	// }
-	ch := make(chan int)
-	generateContent(ch)
+	number := 5
+	ch := make(chan int, number)
+	gateway(ch, number)
+	fmt.Println(<-ch)
+}
+
+func gateway(ch chan int, num_replicas int) {
+	for i := 0; i < num_replicas; i++ {
+		go request(ch)
+	}
 }
 
 //Sorteia números aleatórios entre 1 e 30, dormir pelo tempo do número e retorná-lo
-// int request() {
+func request(ch chan int) {
+	number := generateContent()
+	// time.Duration pra converter do tipo int pra duration
+	time.Sleep(time.Duration(number) * time.Second)
+	ch <- number
+}
 
-// }
-
-func generateContent(out chan int) {
+func generateContent() int {
 	//Se usar só rand de int, ele gera sempre o msm número, pois topLevel functions compartilham um source que gera valores deterministicos
 	// Desse jeito abaixo ele gera um número baseado no tempo que executei
 	rand.Seed(time.Now().UnixNano())
@@ -29,9 +40,8 @@ func generateContent(out chan int) {
 	//Será que o intervalo é aberto no limite superior
 	max := 30
 	number := rand.Intn(max-min) + min
-	// time.Duration pra converter do tipo int pra duration
-	time.Sleep(time.Duration(number) * time.Second)
-	fmt.Println(number)
+
+	return number
 }
 
 //iniciar num_replicas goroutines, e cada thread goroutines a função request.
