@@ -12,14 +12,16 @@ func main() {
 	// fmt.Println("funciona")
 	// }
 	number := 5
-	ch := make(chan int, number)
+	ch := make(chan int)
 	gateway(ch, number)
-	fmt.Println(<-ch)
 }
 
 func gateway(ch chan int, num_replicas int) {
 	for i := 0; i < num_replicas; i++ {
+		fmt.Println(i)
+
 		go request(ch)
+		fmt.Println(<-ch)
 	}
 }
 
