@@ -1,5 +1,11 @@
 package main
 
+/**
+A função request deve sortear um número aleatório entre 1 e 30, dormir por uma quantidade de segundos dada pelo
+número aleatório sorteado, e retornar o valor do número. Por sua vez, a função gateway deve iniciar num_replicas
+goroutines, e cada thread goroutines a função request.
+*/
+
 import (
 	"fmt"
 	"math/rand"
@@ -8,25 +14,28 @@ import (
 
 func main() {
 	number := 5
-	ch := make(chan int)
-	gateway(ch, number)
+	gateway(number)
 }
 
 /**
 Funçaõ que inicia num_replicas goroutines e cada thread goroutines a função request
 */
-func gateway(ch chan int, num_replicas int) {
+func gateway(num_replicas int) {
+	ch := make(chan int)
+
 	for i := 0; i < num_replicas; i++ {
+		fmt.Printf("%d goroutine\n", i+1)
+
 		go request(ch)
 		fmt.Println(<-ch)
 	}
 }
 
 /**
-Sorteia números aleatórios entre 1 e 30, dormir pelo tempo do número e adiciona no channel
+Sorteia números aleatórios entre 1 e 30, dormir pelo tempo do número e adiciona no channel o número
 */
 func request(ch chan<- int) {
-	number := generateContent()
+	number := generateRandomNumber()
 	// time.Duration pra converter do tipo int pra duration
 	time.Sleep(time.Duration(number) * time.Second)
 	ch <- number
@@ -36,7 +45,7 @@ func request(ch chan<- int) {
 Função criada para gerar um número inteiro aleatório entre 1 e 30
 @return inteiro entre 1 e 30
 */
-func generateContent() int {
+func generateRandomNumber() int {
 	// Se usar só rand de int, ele gera sempre o msm número, pois topLevel functions compartilham um source que gera valores deterministicos
 	// Desse jeito abaixo ele gera um número baseado no tempo em que foi executado
 	rand.Seed(time.Now().UnixNano())
