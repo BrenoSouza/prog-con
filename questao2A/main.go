@@ -21,8 +21,7 @@ func main() {
 Funçaõ que inicia num_replicas goroutines e cada thread goroutines a função request
 */
 func gateway(num_replicas int) {
-	ch := make(chan int, num_replicas)
-	sum := 0
+	ch := make(chan int)
 
 	for i := 0; i < num_replicas; i++ {
 
@@ -31,13 +30,18 @@ func gateway(num_replicas int) {
 		go request(ch, i+1)
 	}
 
-	for try := num_replicas; try > 0; try-- {
-		select {
-		case req := <-ch:
-			sum += req
-		}
+	//Canal para esperar o tempo máximo de 8 segundos
+	timeout := time.Tick(8 * time.Second)
+
+	select {
+	// se 8 segundos passarem e nenhum das goroutines de request tiver sido finalizada, o select é ativado com o timeout
+	case <-timeout:
+		fmt.Printf("-1\n")
+		return
+	case number := <-ch:
+		fmt.Println(number)
+		return
 	}
-	fmt.Printf("Soma total %d\n", sum)
 
 }
 
@@ -48,6 +52,7 @@ func request(ch chan<- int, index int) {
 	number := generateRandomNumber()
 	// time.Duration pra converter do tipo int pra duration
 	fmt.Printf("%d goroutine dormindo por %d segundos\n", index, number)
+
 	time.Sleep(time.Duration(number) * time.Second)
 
 	fmt.Printf("%d goroutine terminou\n", index)
@@ -60,9 +65,11 @@ Função criada para gerar um número inteiro aleatório entre 1 e 30
 @return inteiro entre 1 e 30
 */
 func generateRandomNumber() int {
+	// Se usar só rand de int, ele gera sempre o msm número, pois topLevel functions compartilham um source que gera valores deterministicos
+	// Desse jeito abaixo ele gera um número baseado no tempo em que foi executado
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Tem que somar o mínimo, porque por default o valor mínimo gerado é 0
-	min := 10
+	min := 1
 	// Será que o intervalo é aberto no limite superior?
 	max := 30
 	number := r.Intn(max-min) + min
