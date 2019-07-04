@@ -40,13 +40,12 @@ func gateway(num_replicas int) int {
 	//Espera pela duração do tempo estipulado e retorna o valor
 	wait := time.Duration(WAIT_TIME) * time.Second
 
-	// Se passou 8 segundos e nenhuma goroutine de request tiver acabado, o primeiro case será ativado retornando -1
-	// Se alguma goroutine terminar antes dos 8 segundos, retornará o seu valor
+	//Se alguma goroutine terminar antes do tempo definido pelo wait, retornará menos, caso contrário entrará no case do wait
 	select {
 	case <-time.After(wait):
+		return <-ch
+	case <-ch:
 		return -1
-	case number := <-ch:
-		return number
 	}
 }
 
