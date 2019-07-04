@@ -59,7 +59,7 @@ func request(ch chan<- int, index int) {
 
 	time.Sleep(time.Duration(number) * time.Second)
 
-	fmt.Printf("%d goroutine terminou\n", index)
+	fmt.Printf("%d goroutine terminou %d segundos\n", index, number)
 
 	ch <- number
 }
