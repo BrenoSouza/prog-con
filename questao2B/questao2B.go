@@ -12,16 +12,21 @@ import (
 	"time"
 )
 
+const MIN_NUMBER = 1
+const MAX_NUMBER = 30
+const MAX_WAIT = 16
+
 func main() {
-	number := 5
-	gateway(number)
+	num_replicas := 5
+	result := gateway(num_replicas)
+	fmt.Printf("Soma: %d", result)
 }
 
 /**
 Funçaõ que inicia num_replicas goroutines e cada thread goroutines a função request
 */
-func gateway(num_replicas int) {
-	ch := make(chan int, num_replicas)
+func gateway(num_replicas int) int {
+	ch := make(chan int)
 	sum := 0
 
 	for i := 0; i < num_replicas; i++ {
@@ -31,26 +36,24 @@ func gateway(num_replicas int) {
 		go request(ch, i+1)
 	}
 
-	timeout := time.Tick(16 * time.Second)
-
 	for try := num_replicas; try > 0; try-- {
 		select {
-		case <-timeout:
-			sum = -1
-			break
-		case req := <-ch:
-			sum += req
+		case res := <-ch:
+			// Na iteração eu tenho o tempo de cada request, então só comparar com o tempo máximo de espera
+			if res > MAX_WAIT {
+				return -1
+			}
+			sum += res
 		}
 	}
-	fmt.Printf("Soma total %d\n", sum)
-
+	return sum
 }
 
 /**
 Sorteia números aleatórios entre 1 e 30, dormir pelo tempo do número e adiciona no channel o número
 */
 func request(ch chan<- int, index int) {
-	number := generateRandomNumber()
+	number := generateRandomNumber(MIN_NUMBER, MAX_NUMBER)
 	// time.Duration pra converter do tipo int pra duration
 	fmt.Printf("%d goroutine dormindo por %d segundos\n", index, number)
 	time.Sleep(time.Duration(number) * time.Second)
@@ -64,13 +67,13 @@ func request(ch chan<- int, index int) {
 Função criada para gerar um número inteiro aleatório entre 1 e 30
 @return inteiro entre 1 e 30
 */
-func generateRandomNumber() int {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+func generateRandomNumber(min int, max int) int {
+	// Se usar só rand de int, ele gera sempre o msm número, pois topLevel functions compartilham um source que gera valores deterministicos
+	// Desse jeito abaixo ele gera um número baseado no tempo em que foi executado
+	rand.Seed(time.Now().UnixNano())
 	// Tem que somar o mínimo, porque por default o valor mínimo gerado é 0
-	min := 10
 	// Será que o intervalo é aberto no limite superior?
-	max := 30
-	number := r.Intn(max-min) + min
+	number := rand.Intn(max-min) + min
 
 	return number
 }
